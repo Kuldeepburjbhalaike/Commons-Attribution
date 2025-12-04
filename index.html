@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commons Attributor</title>
+    <style>
+        /* Basic Styling for readability */
+        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; color: #333; }
+        .input-section, .results-section { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] { width: 98%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .result-item { margin-bottom: 10px; }
+        .result-label { font-weight: bold; color: #555; display: inline-block; width: 150px; }
+        #loading { display: none; color: #007bff; font-weight: bold; }
+        #error { color: red; font-weight: bold; }
+        
+        /* New Styles for Credit Box */
+        .credit-box {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        pre { 
+            background-color: #fff; 
+            padding: 10px; 
+            border: 1px dashed #ddd; /* Separator for text area */
+            border-radius: 4px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            margin-top: 5px; /* Space after controls */
+        }
+        .credit-controls { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 5px;
+        }
+        .options label { display: inline; font-weight: normal; margin-left: 5px; cursor: pointer; }
+        #copyButton { padding: 8px 15px; background-color: #28a745; }
+        #copyButton:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Commons Attributor</h1>
+
+    <div class="input-section">
+        <label for="commonsUrl">Wikimedia Commons File URL:</label>
+        <input type="text" id="commonsUrl" placeholder="e.g., https://commons.wikimedia.org/wiki/File:Eiffel_Tower_Image.jpg">
+        
+        <button onclick="runAttributionTool()">Generate Attribution</button>
+        <p id="loading">Loading metadata...</p>
+        <p id="error"></p>
+    </div>
+
+    <div class="results-section" id="results">
+        <h2>✅ Attribution Details</h2>
+        
+        <div class="result-item">
+            <span class="result-label">File Name:</span>
+            <span id="fileName"></span> 
+        </div>
+
+        <div class="result-item">
+            <span class="result-label">Author:</span>
+            <span id="authorName"></span>
+        </div>
+        
+        <div class="result-item">
+            <span class="result-label">Upload/Creation Date:</span>
+            <span id="creationYear"></span>
+        </div>
+
+        <div class="result-item">
+            <span class="result-label">License:</span>
+            <span id="licenseDisplay"></span> 
+        </div>
+
+        
+        <div class="credit-box">
+            <h2>Credit Text</h2>
+            
+            <div class="credit-controls" id="creditControls" style="display: none;">
+                <div class="options">
+                    <input type="checkbox" id="richTextToggle" checked onchange="updateCreditDisplay()">
+                    <label for="richTextToggle">Rich Text (HTML Links)</label>
+                </div>
+                <button id="copyButton" onclick="copyCredit()">Copy</button>
+            </div>
+            
+            <pre id="fullCredit"></pre>
+        </div>
+        
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
