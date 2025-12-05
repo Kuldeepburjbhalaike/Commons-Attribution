@@ -1,8 +1,64 @@
 /**
  * Commons Attributor: Core logic to fetch and display Wikimedia Commons attribution data.
- * NOTE: The raw data object is stored in the global scope (window.attributionData) after fetch for reuse.
  */
 window.attributionData = null;
+
+// --- THEME MANAGEMENT LOGIC ---
+
+/**
+ * Loads the theme preference from local storage or defaults to system preference.
+ */
+function loadTheme() {
+    const body = document.body;
+    const toggleButton = document.getElementById('themeToggleButton');
+    
+    let theme = localStorage.getItem('theme');
+    
+    if (!theme) {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+        } else {
+            theme = 'light';
+        }
+    }
+
+    applyTheme(theme, body, toggleButton);
+}
+
+/**
+ * Applies the selected theme class and updates the toggle button text.
+ */
+function applyTheme(theme, body, button) {
+    if (theme === 'dark') {
+        body.classList.add('dark-theme');
+        body.classList.remove('light-theme');
+        button.textContent = '🌙 Toggle Theme';
+    } else {
+        body.classList.add('light-theme');
+        body.classList.remove('dark-theme');
+        button.textContent = '☀️ Toggle Theme';
+    }
+}
+
+/**
+ * Toggles the theme between light and dark on button click.
+ */
+function toggleTheme() {
+    const body = document.body;
+    
+    let newTheme;
+
+    if (body.classList.contains('dark-theme')) {
+        newTheme = 'light';
+    } else {
+        newTheme = 'dark';
+    }
+
+    localStorage.setItem('theme', newTheme);
+    applyTheme(newTheme, body, document.getElementById('themeToggleButton'));
+}
+
+// --- ATTRIBUTION LOGIC ---
 
 /**
  * Executes the attribution fetching process when the button is clicked.
@@ -13,7 +69,6 @@ function runAttributionTool() {
     const loadingMessage = document.getElementById('loading');
     const errorMessage = document.getElementById('error');
     
-    // Reset previous results and messages
     resultsDiv.style.display = 'none';
     document.getElementById('creditControls').style.display = 'none';
     errorMessage.textContent = '';
@@ -29,16 +84,13 @@ function runAttributionTool() {
         .then(data => {
             loadingMessage.style.display = 'none';
             if (data) {
-                // Store data globally for toggle function
                 window.attributionData = data; 
-                
-                // Generate the initial rich text credit
                 data.customCreditRich = generateCustomCredit(data, true);
                 data.customCreditPlain = generateCustomCredit(data, false);
                 
                 updateResults(data);
                 resultsDiv.style.display = 'block';
-                document.getElementById('creditControls').style.display = 'flex'; // Show controls
+                document.getElementById('creditControls').style.display = 'flex'; 
             } else {
                 errorMessage.textContent = 'Could not fetch attribution data. Please check the URL or if the file exists.';
             }
@@ -53,7 +105,6 @@ function runAttributionTool() {
 
 /**
  * Cleans up the Creation Year value, extracting only the date part, and stripping HTML/comments.
- * (Logic unchanged from previous version)
  */
 function cleanYearValue(rawDateValue) {
     if (!rawDateValue || rawDateValue === 'N/A') {
@@ -69,8 +120,7 @@ function cleanYearValue(rawDateValue) {
 
 
 /**
- * Fetches attribution details from the Wikimedia Commons API, including the file name.
- * (Logic largely unchanged from previous version)
+ * Fetches attribution details from the Wikimedia Commons API, including the thumbnail.
  */
 async function getCommonsAttribution(url) {
     
@@ -87,7 +137,9 @@ async function getCommonsAttribution(url) {
         action: 'query',
         prop: 'imageinfo',
         titles: fileTitle,
+        // Request thumbnail at max 180px width
         iiprop: 'extmetadata|url', 
+        iiurlwidth: 180, 
         format: 'json',
         origin: '*' 
     });
@@ -109,8 +161,11 @@ async function getCommonsAttribution(url) {
              return null;
         }
 
-        const metadata = page.imageinfo[0].extmetadata;
-        const infoUrl = page.imageinfo[0].descriptionurl; 
+        const imageInfo = page.imageinfo[0];
+        const metadata = imageInfo.extmetadata;
+        const infoUrl = imageInfo.descriptionurl; 
+        const thumbUrl = imageInfo.thumburl; // Thumbnail URL
+        const thumbWidth = imageInfo.thumbwidth; // Thumbnail width
 
         if (!metadata) {
             return null;
@@ -122,13 +177,13 @@ async function getCommonsAttribution(url) {
             fileTitle: fileTitle,
             fileName: fileName,
             commonsUrl: infoUrl,
+            thumbUrl: thumbUrl,
+            thumbWidth: thumbWidth,
             author: metadata.Artist?.value || 'N/A',
             authorPlain: metadata.Artist?.value?.replace(/<[^>]*>/g, '').trim() || 'N/A', 
             creationDateCleaned: cleanYearValue(rawDate), 
             licenseShort: metadata.LicenseShortName?.value || 'N/A',
             licenseUrl: metadata.LicenseUrl?.value || 'N/A',
-            // License components for rich text icons
-            licenseComponents: metadata.LicenseComponent?.value?.split(',') || [], 
         };
         
         return attributionData;
@@ -141,73 +196,50 @@ async function getCommonsAttribution(url) {
 
 /**
  * Generates the custom attribution string based on the user's choice (rich vs plain).
- * This function also includes the Creative Commons icons logic.
  */
 function generateCustomCredit(data, isRichText) {
     
     const yearMatch = data.creationDateCleaned.match(/(\d{4})/);
     const year = yearMatch ? yearMatch[0] : 'Year Unknown';
 
-    // 1. Author Text/Link
-    // The author field from Commons API is already rich text, we just ensure it opens in a new tab.
     const authorText = isRichText 
                        ? data.author.replace(/<a\s/g, '<a target="_blank" ') 
                        : data.authorPlain;
 
-    // 2. File Title Link/Text
     const fileTitleLink = isRichText 
                           ? `<a href="${data.commonsUrl}" target="_blank">${data.fileName}</a>`
                           : data.fileName;
 
-    // 3. License Link/Text
     const licenseLink = isRichText && data.licenseUrl !== 'N/A'
                         ? `<a href="${data.licenseUrl}" target="_blank">${data.licenseShort}</a>`
                         : data.licenseShort;
                         
-    // 4. Creative Commons Icon HTML (Rich Text only)
-    let iconHtml = '';
-    if (isRichText && data.licenseComponents.length > 0) {
-        const iconBaseUrl = "https://mirrors.creativecommons.org/presskit/icons/";
-        const iconStyle = 'style="max-width: 1em;max-height:1em;margin-left: .2em;"';
-        
-        // Loop through components (cc, by, sa, nc, nd)
-        data.licenseComponents.forEach(component => {
-            const iconName = component.toLowerCase().trim();
-            if (iconName) {
-                iconHtml += `<img src="${iconBaseUrl}${iconName}.svg" alt="${iconName}" ${iconStyle}>`;
-            }
-        });
-    }
     
-    // Construct the core attribution sentence:
-    let coreCredit = `${fileTitleLink} © ${year} by ${authorText} is licensed under ${licenseLink}${iconHtml}`;
+    let coreCredit = `${fileTitleLink} © ${year} by ${authorText} is licensed under ${licenseLink}`;
 
     if (isRichText) {
-        // HTML output
         return coreCredit;
     } else {
-        // Plain text output
         let plainCredit = `${data.fileName} © ${year} by ${data.authorPlain} is licensed under ${data.licenseShort}.`;
         
         if (data.licenseUrl !== 'N/A') {
             plainCredit += ` To view a copy of this license, visit ${data.licenseUrl}`;
         }
         
-        // Clean up any stray HTML remaining in the credit line
         return plainCredit.replace(/<[^>]*>/g, '').trim();
     }
 }
 
 /**
- * Updates the display elements based on the fetched data.
+ * Updates the display elements based on the fetched data, including the thumbnail.
  */
 function updateResults(data) {
-    // Basic fields
+    const isRichText = document.getElementById('richTextToggle').checked;
+    
     document.getElementById('authorName').innerHTML = data.author;
     document.getElementById('creationYear').textContent = data.creationDateCleaned;
     document.getElementById('fileName').textContent = data.fileName;
     
-    // License Display (Combined Short Name + URL as link)
     const licenseDisplay = document.getElementById('licenseDisplay');
     if (data.licenseUrl !== 'N/A') {
         licenseDisplay.innerHTML = `<a href="${data.licenseUrl}" target="_blank">${data.licenseShort}</a>`;
@@ -215,9 +247,25 @@ function updateResults(data) {
         licenseDisplay.textContent = data.licenseShort;
     }
     
-    // Update Full Credit Text (Initial display is Rich Text)
-    document.getElementById('fullCredit').innerHTML = data.customCreditRich;
-    document.getElementById('richTextToggle').checked = true;
+    // Thumbnail Logic
+    const thumbnailImg = document.getElementById('fileThumbnail');
+    if (data.thumbUrl && data.thumbUrl !== 'N/A') {
+        thumbnailImg.src = data.thumbUrl;
+        thumbnailImg.width = data.thumbWidth;
+        thumbnailImg.style.display = 'block';
+    } else {
+        thumbnailImg.style.display = 'none';
+        thumbnailImg.src = ''; 
+    }
+    
+    // Update Full Credit Text
+    const fullCreditPre = document.getElementById('fullCredit');
+    
+    if (isRichText) {
+        fullCreditPre.innerHTML = data.customCreditRich;
+    } else {
+        fullCreditPre.textContent = data.customCreditPlain;
+    }
 }
 
 /**
@@ -251,7 +299,6 @@ function copyCredit() {
         textToCopy = window.attributionData.customCreditPlain;
     }
 
-    // Use the modern clipboard API
     navigator.clipboard.writeText(textToCopy).then(() => {
         const originalText = copyButton.textContent;
         copyButton.textContent = 'Copied!';
@@ -263,9 +310,3 @@ function copyCredit() {
         console.error('Copy failed:', err);
     });
 }
-
-
-// Initial hide of results section until data is ready
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('results').style.display = 'none';
-});
