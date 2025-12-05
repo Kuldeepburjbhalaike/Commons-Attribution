@@ -5,34 +5,211 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commons Attributor</title>
     <style>
-        /* Basic Styling for readability */
-        body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1 { text-align: center; color: #333; }
-        .input-section, .results-section { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input[type="text"] { width: 98%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
+        /* Base Light Theme Styles */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --container-bg: #f9f9f9;
+            --border-color: #ddd;
+            --pre-bg: #f4f4f4;
+            --link-color: #007bff;
+            --highlight-button-bg: #007bff; 
+            --success-button-bg: #28a745; 
+            --success-button-text: white; 
+            --success-button-border: none;
+        }
+
+        /* Dark Theme Detection */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --text-color: #e0e0e0;
+                --container-bg: #1e1e1e;
+                --border-color: #555;
+                --pre-bg: #282828;
+                --link-color: #ffc107; /* High contrast Yellow/Amber */
+                --highlight-button-bg: #00a2ff; /* Bright Blue */
+                --success-button-bg: transparent; 
+                --success-button-text: #e0e0e0; 
+                --success-button-border: 1px solid #e0e0e0; 
+            }
+            input[type="text"] {
+                background-color: #333;
+                color: var(--text-color);
+                border: 1px solid #555 !important;
+            }
+        }
+        
+        /* Manual Theme Classes (for toggle) */
+        body.dark-theme {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --container-bg: #1e1e1e;
+            --border-color: #555;
+            --pre-bg: #282828;
+            --link-color: #ffc107; 
+            --highlight-button-bg: #00a2ff;
+            --success-button-bg: transparent; 
+            --success-button-text: #e0e0e0; 
+            --success-button-border: 1px solid #e0e0e0;
+        }
+        body.dark-theme input[type="text"] {
+            background-color: #333;
+            color: var(--text-color);
+            border: 1px solid #555 !important;
+        }
+        
+        body.light-theme {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --container-bg: #f9f9f9;
+            --border-color: #ddd;
+            --pre-bg: #f4f4f4;
+            --link-color: #007bff;
+            --highlight-button-bg: #007bff;
+            --success-button-bg: #28a745;
+            --success-button-text: white;
+            --success-button-border: none;
+        }
+        body.light-theme input[type="text"] {
+            background-color: #ffffff;
+            color: #333333;
+            border: 1px solid #ddd !important;
+        }
+
+
+        /* Apply Theme Variables */
+        body { 
+            font-family: sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        /* Header and Input Layout */
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-section { 
+            margin-bottom: 25px; 
+            padding: 15px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            background-color: var(--container-bg);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        .input-group input[type="text"] {
+            flex-grow: 1;
+            padding: 10px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+        }
+        
+        h1 { color: var(--text-color); margin-top: 0; margin-bottom: 20px; }
+        h2 { color: var(--text-color); }
+        .results-section { 
+            margin-bottom: 25px; 
+            padding: 15px; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            background-color: var(--container-bg);
+        }
+        
+        /* Button Styles */
+        button { 
+            padding: 10px 20px; 
+            background-color: var(--highlight-button-bg); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            white-space: nowrap;
+        }
+        button:hover { 
+            filter: brightness(1.1);
+        }
+        
+        #themeToggleButton {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+        #themeToggleButton:hover {
+            filter: brightness(1.2);
+        }
+        #copyButton { 
+            padding: 8px 15px; 
+            background-color: var(--success-button-bg); 
+            color: var(--success-button-text);
+            border: var(--success-button-border);
+        }
+        #copyButton:hover { filter: brightness(0.9); }
+
+
         .result-item { margin-bottom: 10px; }
-        .result-label { font-weight: bold; color: #555; display: inline-block; width: 150px; }
-        #loading { display: none; color: #007bff; font-weight: bold; }
+        .result-label { font-weight: bold; color: var(--text-color); display: inline-block; width: 150px; }
+        #loading { display: none; color: var(--link-color); font-weight: bold; }
         #error { color: red; font-weight: bold; }
         
-        /* New Styles for Credit Box */
+        /* Links in results (Author, License) */
+        a {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Thumbnail and Metadata Layout */
+        .attribution-content {
+            display: flex;
+            gap: 20px;
+        }
+        .metadata-details {
+            flex-grow: 1;
+        }
+        .thumbnail-container {
+            width: 180px; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 5px;
+        }
+        #fileThumbnail {
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 4px; 
+            border: 1px solid var(--border-color); 
+            display: none; 
+        }
+
+        /* Credit Box */
         .credit-box {
-            border: 1px solid #ccc;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             padding: 10px;
-            background-color: #f9f9f9;
+            background-color: var(--container-bg);
+            margin-top: 15px; /* Added spacing after thumbnail section */
         }
         pre { 
-            background-color: #fff; 
+            background-color: var(--pre-bg); 
             padding: 10px; 
-            border: 1px dashed #ddd; /* Separator for text area */
+            border: 1px dashed var(--border-color); 
             border-radius: 4px; 
             white-space: pre-wrap; 
             word-wrap: break-word; 
-            margin-top: 5px; /* Space after controls */
+            margin-top: 5px;
+            color: var(--text-color);
         }
         .credit-controls { 
             display: flex; 
@@ -41,36 +218,49 @@
             margin-bottom: 5px;
         }
         .options label { display: inline; font-weight: normal; margin-left: 5px; cursor: pointer; }
-        #copyButton { padding: 8px 15px; background-color: #28a745; }
-        #copyButton:hover { background-color: #218838; }
 
         /* Footer Style */
         footer {
             margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid var(--border-color);
             text-align: center;
             font-size: 0.9em;
             color: #777;
         }
         footer a {
-            color: #007bff;
+            color: var(--link-color);
             text-decoration: none;
-            margin: 0 5px; /* Added spacing for multiple links */
+            margin: 0 5px;
         }
         footer a:hover {
             text-decoration: underline;
         }
+        .github-icon {
+            width: 1.1em;
+            height: 1.1em;
+            vertical-align: middle;
+            margin-right: 2px;
+            fill: currentColor;
+        }
     </style>
 </head>
-<body>
-    <h1>🖼️ Commons Attributor</h1>
+<body class="auto-theme"> 
+    
+    <div class="header-container">
+        <h1>Commons Attributor</h1>
+        
+        <button id="themeToggleButton" onclick="toggleTheme()">☀️ Toggle Theme</button>
+    </div>
 
     <div class="input-section">
         <label for="commonsUrl">Wikimedia Commons File URL:</label>
-        <input type="text" id="commonsUrl" placeholder="e.g., https://commons.wikimedia.org/wiki/File:Eiffel_Tower_Image.jpg">
         
-        <button onclick="runAttributionTool()">Generate Attribution</button>
+        <div class="input-group">
+            <input type="text" id="commonsUrl" placeholder="https://commons.wikimedia.org/wiki/File:Eiffel_Tower_Image.jpg">
+            <button onclick="runAttributionTool()">Generate Attribution</button>
+        </div>
+        
         <p id="loading">Loading metadata...</p>
         <p id="error"></p>
     </div>
@@ -78,24 +268,32 @@
     <div class="results-section" id="results">
         <h2>✅ Attribution Details</h2>
         
-        <div class="result-item">
-            <span class="result-label">Author:</span>
-            <span id="authorName"></span>
-        </div>
-        
-        <div class="result-item">
-            <span class="result-label">Upload/Creation Date:</span>
-            <span id="creationYear"></span>
-        </div>
+        <div class="attribution-content">
+            <div class="metadata-details">
+                <div class="result-item">
+                    <span class="result-label">Author:</span>
+                    <span id="authorName"></span>
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">Upload/Creation Date:</span>
+                    <span id="creationYear"></span>
+                </div>
 
-        <div class="result-item">
-            <span class="result-label">License:</span>
-            <span id="licenseDisplay"></span> 
-        </div>
-        
-        <div class="result-item">
-            <span class="result-label">File Name:</span>
-            <span id="fileName"></span> 
+                <div class="result-item">
+                    <span class="result-label">License:</span>
+                    <span id="licenseDisplay"></span> 
+                </div>
+                
+                <div class="result-item">
+                    <span class="result-label">File Name:</span>
+                    <span id="fileName"></span> 
+                </div>
+            </div>
+            
+            <div class="thumbnail-container">
+                <img id="fileThumbnail" src="" alt="File thumbnail">
+            </div>
         </div>
 
         
@@ -122,7 +320,7 @@
         <a href="https://github.com/Kuldeepburjbhalaike/Commons-Attribution" target="_blank">
         <svg class="github-icon" viewBox="0 0 16 16" version="1.1" aria-hidden="true"><path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
         Source Code
-        </a> | 
-        <a href="credits.html" target="_blank">Credits</a>    </footer>
+        </a>
+    </footer>
 </body>
 </html>
