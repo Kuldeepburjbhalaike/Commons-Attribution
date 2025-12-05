@@ -69,6 +69,7 @@ function runAttributionTool() {
     const loadingMessage = document.getElementById('loading');
     const errorMessage = document.getElementById('error');
     
+    // Clear previous results and hide controls
     resultsDiv.style.display = 'none';
     document.getElementById('creditControls').style.display = 'none';
     errorMessage.textContent = '';
@@ -104,7 +105,7 @@ function runAttributionTool() {
 
 
 /**
- * Cleans up the Creation Year value, extracting only the date part, and stripping HTML/comments.
+ * Cleans up the Creation Year value, extracting only the date part.
  */
 function cleanYearValue(rawDateValue) {
     if (!rawDateValue || rawDateValue === 'N/A') {
@@ -137,11 +138,11 @@ async function getCommonsAttribution(url) {
         action: 'query',
         prop: 'imageinfo',
         titles: fileTitle,
-        // Request thumbnail at max 180px width
         iiprop: 'extmetadata|url', 
         iiurlwidth: 180, 
+        iilimit: 1, // Fix for better reliability on platforms like GitHub Pages
+        origin: '*', // CORS fix: Essential for fetching resources from Wikimedia
         format: 'json',
-        origin: '*' 
     });
 
     const apiUrl = `${API_ENDPOINT}?${params.toString()}`;
@@ -258,7 +259,6 @@ function updateResults(data) {
         thumbnailImg.src = ''; 
     }
     
-    // Update Full Credit Text
     const fullCreditPre = document.getElementById('fullCredit');
     
     if (isRichText) {
@@ -310,3 +310,10 @@ function copyCredit() {
         console.error('Copy failed:', err);
     });
 }
+
+
+// FIX: Ensure theme is loaded reliably after DOM content is ready.
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('results').style.display = 'none';
+    loadTheme(); // Load theme on startup
+});
