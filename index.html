@@ -13,9 +13,9 @@
             --border-color: #ddd;
             --pre-bg: #f4f4f4;
             --link-color: #007bff;
-            --highlight-button-bg: #007bff; 
-            --success-button-bg: #28a745; 
-            --success-button-text: white; 
+            --highlight-button-bg: #007bff; /* Generate Attribution */
+            --success-button-bg: #28a745; /* Copy button */
+            --success-button-text: white; /* Copy button text */
             --success-button-border: none;
         }
 
@@ -27,11 +27,11 @@
                 --container-bg: #1e1e1e;
                 --border-color: #555;
                 --pre-bg: #282828;
-                --link-color: #ffc107; /* High contrast Yellow/Amber */
-                --highlight-button-bg: #00a2ff; /* Bright Blue */
-                --success-button-bg: transparent; 
-                --success-button-text: #e0e0e0; 
-                --success-button-border: 1px solid #e0e0e0; 
+                --link-color: #ffc107; /* HIGH CONTRAST YELLOW/AMBER for links/Author/License */
+                --highlight-button-bg: #00a2ff; /* BRIGHT BLUE for Generate Attribution */
+                --success-button-bg: transparent; /* Transparent for cleaner look */
+                --success-button-text: #e0e0e0; /* Bright text */
+                --success-button-border: 1px solid #e0e0e0; /* Added Border */
             }
             input[type="text"] {
                 background-color: #333;
@@ -40,7 +40,7 @@
             }
         }
         
-        /* Manual Theme Classes (for toggle) */
+        /* Manual Dark Theme Class */
         body.dark-theme {
             --bg-color: #121212;
             --text-color: #e0e0e0;
@@ -59,6 +59,7 @@
             border: 1px solid #555 !important;
         }
         
+        /* Manual Light Theme Class */
         body.light-theme {
             --bg-color: #ffffff;
             --text-color: #333333;
@@ -103,6 +104,7 @@
             background-color: var(--container-bg);
         }
         
+        /* Input field base style */
         .input-group {
             display: flex;
             gap: 10px;
@@ -124,7 +126,6 @@
             background-color: var(--container-bg);
         }
         
-        /* Button Styles */
         button { 
             padding: 10px 20px; 
             background-color: var(--highlight-button-bg); 
@@ -138,6 +139,7 @@
             filter: brightness(1.1);
         }
         
+        /* Specific Button Styles */
         #themeToggleButton {
             padding: 8px 15px;
             font-size: 0.9em;
@@ -199,7 +201,7 @@
             border-radius: 4px;
             padding: 10px;
             background-color: var(--container-bg);
-            margin-top: 15px; /* Added spacing after thumbnail section */
+            margin-top: 15px; 
         }
         pre { 
             background-color: var(--pre-bg); 
