@@ -3,7 +3,7 @@
  */
 window.attributionData = null;
 
-// --- THEME MANAGEMENT LOGIC ---
+// --- THEME MANAGEMENT LOGIC (UNCHANGED) ---
 
 /**
  * Loads the theme preference from local storage or defaults to system preference.
@@ -69,7 +69,6 @@ function runAttributionTool() {
     const loadingMessage = document.getElementById('loading');
     const errorMessage = document.getElementById('error');
     
-    // Clear previous results and hide controls
     resultsDiv.style.display = 'none';
     document.getElementById('creditControls').style.display = 'none';
     errorMessage.textContent = '';
@@ -128,11 +127,21 @@ async function getCommonsAttribution(url) {
     const fileTitleMatch = url.split('File:');
     if (fileTitleMatch.length < 2) return null;
     
-    let fileTitle = 'File:' + fileTitleMatch[1].split('#')[0].split('?')[0];
-    fileTitle = fileTitle.replace(/ /g, '_'); 
+    // --- FIX START: Correctly handle URL-encoded characters ---
+    let encodedFilename = fileTitleMatch[1].split('#')[0].split('?')[0];
+    
+    // 1. Decode the URL component (e.g., %22 becomes ")
+    let decodedFilename = decodeURIComponent(encodedFilename);
+    
+    // 2. Standardize spaces (which may have been spaces or %20 before encoding) to underscores
+    let standardizedFilename = decodedFilename.replace(/ /g, '_');
+    
+    let fileTitle = 'File:' + standardizedFilename;
 
-    const fileName = fileTitle.split(':')[1].replace(/_/g, ' '); 
-
+    // Use the decoded version for the filename display (more readable)
+    const fileName = decodedFilename.replace(/_/g, ' '); 
+    // --- FIX END ---
+    
     const API_ENDPOINT = "https://commons.wikimedia.org/w/api.php";
     const params = new URLSearchParams({
         action: 'query',
@@ -215,14 +224,13 @@ function generateCustomCredit(data, isRichText) {
                         ? `<a href="${data.licenseUrl}" target="_blank">${data.licenseShort}</a>`
                         : data.licenseShort;
                         
-    // Check for CC0 license
     const isCC0 = data.licenseShort.toUpperCase().includes('CC0');
 
     let coreCredit;
 
     if (isRichText) {
         if (isCC0) {
-            // NEW CC0 FORMAT: File by Author is marked CC0 1.0
+            // CC0 FORMAT: File by Author is marked CC0 1.0
             coreCredit = `${fileTitleLink} by ${authorText} is marked ${licenseLink}`;
         } else {
             // Standard FORMAT: File © Year by Author is licensed under License
@@ -231,7 +239,7 @@ function generateCustomCredit(data, isRichText) {
         return coreCredit;
         
     } else {
-        // Plain Text Format (No change needed)
+        // Plain Text Format 
         let plainCredit = `${data.fileName} © ${year} by ${data.authorPlain} is licensed under ${data.licenseShort}.`;
         
         if (data.licenseUrl !== 'N/A') {
@@ -259,7 +267,6 @@ function updateResults(data) {
         licenseDisplay.textContent = data.licenseShort;
     }
     
-    // Thumbnail Logic
     const thumbnailImg = document.getElementById('fileThumbnail');
     if (data.thumbUrl && data.thumbUrl !== 'N/A') {
         thumbnailImg.src = data.thumbUrl;
@@ -323,8 +330,7 @@ function copyCredit() {
 }
 
 
-// FIX: Ensure theme is loaded reliably after DOM content is ready.
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('results').style.display = 'none';
-    loadTheme(); // Load theme on startup
+    loadTheme(); 
 });
