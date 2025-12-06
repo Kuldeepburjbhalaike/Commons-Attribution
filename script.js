@@ -140,8 +140,8 @@ async function getCommonsAttribution(url) {
         titles: fileTitle,
         iiprop: 'extmetadata|url', 
         iiurlwidth: 180, 
-        iilimit: 1, // Fix for better reliability on platforms like GitHub Pages
-        origin: '*', // CORS fix: Essential for fetching resources from Wikimedia
+        iilimit: 1, 
+        origin: '*', 
         format: 'json',
     });
 
@@ -165,8 +165,8 @@ async function getCommonsAttribution(url) {
         const imageInfo = page.imageinfo[0];
         const metadata = imageInfo.extmetadata;
         const infoUrl = imageInfo.descriptionurl; 
-        const thumbUrl = imageInfo.thumburl; // Thumbnail URL
-        const thumbWidth = imageInfo.thumbwidth; // Thumbnail width
+        const thumbUrl = imageInfo.thumburl; 
+        const thumbWidth = imageInfo.thumbwidth; 
 
         if (!metadata) {
             return null;
@@ -215,12 +215,23 @@ function generateCustomCredit(data, isRichText) {
                         ? `<a href="${data.licenseUrl}" target="_blank">${data.licenseShort}</a>`
                         : data.licenseShort;
                         
-    
-    let coreCredit = `${fileTitleLink} © ${year} by ${authorText} is licensed under ${licenseLink}`;
+    // Check for CC0 license
+    const isCC0 = data.licenseShort.toUpperCase().includes('CC0');
+
+    let coreCredit;
 
     if (isRichText) {
+        if (isCC0) {
+            // NEW CC0 FORMAT: File by Author is marked CC0 1.0
+            coreCredit = `${fileTitleLink} by ${authorText} is marked ${licenseLink}`;
+        } else {
+            // Standard FORMAT: File © Year by Author is licensed under License
+            coreCredit = `${fileTitleLink} © ${year} by ${authorText} is licensed under ${licenseLink}`;
+        }
         return coreCredit;
+        
     } else {
+        // Plain Text Format (No change needed)
         let plainCredit = `${data.fileName} © ${year} by ${data.authorPlain} is licensed under ${data.licenseShort}.`;
         
         if (data.licenseUrl !== 'N/A') {
